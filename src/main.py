@@ -3,13 +3,15 @@ from copystatic import copyFromTo
 
 import shutil
 import os
+import sys
 
 dir_path_static = "./static"
-dir_path_public = "./public"
+#dir_path_public = "./public" # changed public to docs for publishing to github
+dir_path_public = "./docs"
 dir_path_content = "./content"
 template_path = "./template.html"
 
-
+basepath = sys.argv[1] if len(sys.argv) > 1 else "/"
 
 
 
@@ -24,7 +26,8 @@ def main():
     generate_pages_recursive(
         dir_path_content,
         template_path,
-        dir_path_public
+        dir_path_public,
+        basepath
         )
 
 
