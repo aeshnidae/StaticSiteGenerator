@@ -1,7 +1,7 @@
 from enum import Enum
 from htmlnode import ParentNode, HTMLNode, LeafNode
 from inline import text_to_textnodes
-from textnode import TextNode, text_node_to_html_node
+from textnode import TextNode, TextType, text_node_to_html_node
 
 class BlockType(Enum):
     PARAGRAPH = "paragraph"
@@ -80,6 +80,10 @@ def valid_ordered_list(text):
     return BlockType.ORDERED_LIST
     
 
+def text_to_children(text):
+    text_nodes = text_to_textnodes(text)
+    return [text_node_to_html_node(text_node) for text_node in text_nodes]
+
 
 def markdown_to_html_node(markdown):
     html_nodes = []
@@ -88,24 +92,29 @@ def markdown_to_html_node(markdown):
         match block_to_block_type(block):
 
             case BlockType.PARAGRAPH:
-                text_nodes = text_to_textnodes(block.replace("\n", " "))
-                leaf_nodes = [text_node_to_html_node(text_node) for text_node in text_nodes]
-                new_node = HTMLNode("p", None, leaf_nodes, None)
+                text = block.replace("\n", " ")
+                leaf_nodes = text_to_children(text)
+                new_node = ParentNode("p", leaf_nodes)
                 html_nodes.append(new_node)
 
             case BlockType.HEADING:
                 parts = block.split(" ",1)
                 size = len(parts[0])
-                new_node = HTMLNode(f"h{size}", parts[1], None, None)
+                children = text_to_children(parts[1])
+                new_node = ParentNode(f"h{size}", children)
                 html_nodes.append(new_node)
 
             case BlockType.CODE:
                 text = block[4:-3]
-                new_node = HTMLNode("pre", None, [LeafNode("code", text)], None)
+                text_node = TextNode(text, TextType.TEXT)
+                text_html = text_node_to_html_node(text_node)
+                new_node = ParentNode("pre", [ParentNode("code", [text_html])])
                 html_nodes.append(new_node)
 
             case BlockType.QUOTE:
-                new_node = HTMLNode("blockquote", block.replace("\n", " ").replace("> ","").replace(">",""), None, None)
+                quote = block.replace("\n", " ").replace("> ","").replace(">","")
+                children = text_to_children(quote)
+                new_node = ParentNode("blockquote", children)
                 html_nodes.append(new_node)
 
             # These two look spicy
